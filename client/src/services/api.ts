@@ -2,6 +2,7 @@ const API_BASE = '/api';
 
 export async function getStatus() {
   const res = await fetch(`${API_BASE}/status`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
 

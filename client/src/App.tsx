@@ -11,12 +11,30 @@ function App() {
   const [serverOnline, setServerOnline] = useState(true);
 
   useEffect(() => {
-    getStatus()
-      .then((res: any) => {
-        setDevMode(!!res.developmentMode);
-        setServerOnline(true);
-      })
-      .catch(() => setServerOnline(false));
+    let mounted = true;
+
+    const checkStatus = () => {
+      getStatus()
+        .then((res: any) => {
+          if (!mounted) return;
+          setDevMode(!!res.developmentMode);
+          setServerOnline(true);
+        })
+        .catch(() => {
+          if (!mounted) return;
+          setServerOnline(false);
+        });
+    };
+
+    checkStatus();
+    const interval = setInterval(checkStatus, 5000);
+    window.addEventListener('focus', checkStatus);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+      window.removeEventListener('focus', checkStatus);
+    };
   }, []);
 
   const navLink = (to: string, label: string, Icon: any) => (
@@ -63,16 +81,20 @@ function App() {
           </div>
 
           <div className="flex items-center gap-3">
-            {!serverOnline && (
+            {!serverOnline ? (
               <span className="flex items-center gap-1.5 text-xs text-error">
                 <AlertTriangle size={13} />
                 Server Offline
               </span>
-            )}
-            {devMode && serverOnline && (
+            ) : devMode ? (
               <span className="flex items-center gap-1.5 px-2.5 py-1 bg-warning/10 text-warning text-xs rounded-full">
                 <AlertTriangle size={12} />
                 Dev Mode
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/10 text-emerald-400 text-xs rounded-full border border-emerald-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                Live SMTP
               </span>
             )}
           </div>
